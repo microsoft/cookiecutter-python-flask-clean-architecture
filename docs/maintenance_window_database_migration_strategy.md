@@ -49,6 +49,12 @@ class ServiceContext(db.Model, ModelExtension):
     maintenance = db.Column(db.Boolean, default=False)
 ```
 
+We use a database model to store the current state of the service because it allows
+us to store the state of the service in a persistent manner. This means that if the
+service is restarted, the state of the service will be restored. Also, if the service
+is running on multiple instances, the state of the service will be consistent across
+all instances. 
+
 ### Service context service
 The service context service is a service that is used to interact with the service
 context database model. The service context service is defined as follows:
@@ -91,11 +97,11 @@ class ServiceContextService:
 ```
 
 ### Maintenance mode activation
+To activate the maintenance mode, we can use a route as shown below:
 ```python
 @blueprint.route('/maintenance/activate', methods=['GET'])
 @inject
 def activate_maintenance_mode(
-    _,
     service_context_service=Provide[
         DependencyContainer.service_context_service
     ]
@@ -103,13 +109,26 @@ def activate_maintenance_mode(
     service_context_service.activate_maintenance_mode()
     return jsonify({"message": "maintenance mode activated"}), 200
 ```
+When creating a public route, make sure that you have a way to authenticate the user 
+that makes the request in order to determine that the uses has the necessary permissions.
+
+You can also create a management command with [Flask script]("https://flask-script.readthedocs.io/en/latest/") to 
+activate the maintenance mode from within the application: 
+
+```python
+@manager.command
+def activate_maintenance_mode():
+    service_context_service = app.container.service_context_service()
+    service_context_service.activate_maintenance_mode()
+    logger.info("Maintenance mode activated")
+```
 
 ### Maintenance mode deactivation
+To deactivate the maintenance mode, we can use a route as shown below:
 ```python
 @blueprint.route('/maintenance/deactivate', methods=['GET'])
 @inject
 def deactivate_maintenance_mode(
-    _,
     service_context_service=Provide[
         DependencyContainer.service_context_service
     ]
@@ -117,15 +136,22 @@ def deactivate_maintenance_mode(
     service_context_service.deactivate_maintenance_mode()
     return jsonify({"message": "maintenance mode deactivated"}), 200
 ```
+Just as the activation mode, make sure that you have a way to authenticate the user
+that makes the request in order to determine that the uses has the necessary permissions.
+
+You can also create a management command with [Flask script]("https://flask-script.readthedocs.io/en/latest/") to
+```python
+@manager.command
+def deactivate_maintenance_mode():
+    service_context_service = app.container.service_context_service()
+    service_context_service.deactivate_maintenance_mode()
+    logger.info("Maintenance mode deactivated")
+```
 
 ### Maintenance mode check
-In this example, we're using the before_request decorator to run the 
-perform_migration function before the first request is processed by the application. 
-This allows us to perform the database migration as soon as the application starts, 
-before any requests are served.
+We're using the before_request decorator to run the maintenance mode check before
+each request. The maintenance mode check is defined as follows:
 
-
-**Check if maintenance mode is active**
 ```python
 @app.before_request
 def check_for_maintenance():
@@ -139,30 +165,37 @@ def check_for_maintenance():
             ), 503
 ```
 
-## Pipeline migration strategy
-1. Activate the live web app in the production slot in maintenance mode via curl command: 
-   ```sh
-   curl -X GET "https://<your production service url>/maintenance/activate" -H "accept: application/json"
-   ```
-2. Deploy the new version of the web app to the staging slot:
-    ```sh
-    az webapp up --sku F1 --name <your service name> --resource-group <your resource group name> --slot staging       ```
+With this implementation, the service will return a 503 http status code for all
+requests that are not made to the maintenance mode activation, deactivation
+or status routes.
+
+## Applying migrations during maintenance window
+You have several ways to apply migrations during a maintenance window. 
+
+One way is to do the migration manually by running the migration commands from 
+within the application. This is the simplest way to apply migrations and gives 
+you the most control over the migration process.
+
+An example of applying the migration manually is shown below in a kubernetes cluster:
+
+1. Login into a pod that has access to a database and has the maintenance window strategy implemented
+    ```bash
+    kubectl exec -it <pod_name> -- /bin/bash
     ```
-3. Activate maintenance mode in the staging slot via curl command:
-    ```sh
-    curl -X GET "https://<your production service url>/maintenance/activate" -H "accept: application/json"
+
+2. Activate the maintenance mode
+    ```bash
+    python manage.py activate_maintenance_mode
     ```
-4. Apply the migration file to the staging slot:
-    ```sh
-    az webapp create-remote-connection --name <your service name> --resource-group <your resource group name> --slot staging
+
+3. Apply the migration
+    ```bash
+    python manage.py db upgrade
     ```
-5. Switch the production and staging slot
-    ```sh
-    az webapp deployment slot swap --name <your service name> --resource-group <your resource group name> --slot staging
-    ```
-6. Deactivate maintenance mode in the production slot via curl command:
-    ```sh
-    curl -X GET "https://<your production service url>/maintenance/deactivate" -H "accept: application/json"
+
+4. Deactivate the maintenance mode
+    ```bash
+    python manage.py deactivate_maintenance_mode
     ```
 
 ## Closing remarks
