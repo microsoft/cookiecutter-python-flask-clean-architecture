@@ -27,14 +27,14 @@ def show_db_tables():
 @manager.command
 def activate_maintenance_mode():
     service_context_service = app.container.service_context_service()
-    service_context_service.activate_maintenance_mode()
+    service_context_service.update({"maintenance": True})
     logger.info("Maintenance mode activated")
 
 
 @manager.command
 def deactivate_maintenance_mode():
     service_context_service = app.container.service_context_service()
-    service_context_service.deactivate_maintenance_mode()
+    service_context_service.update({"maintenance": False})
     logger.info("Maintenance mode deactivated")
 
 

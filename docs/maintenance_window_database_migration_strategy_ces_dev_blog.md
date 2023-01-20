@@ -1,7 +1,9 @@
 # Maintenance window strategy for database migrations
-In a recent engagement, we were tasked with implementing a database migrations strategy. 
-The goal was to ensure that the service was not available during the migration process.
-This blog post will describe the strategy we implemented and how we applied it.
+In a recent project, we were tasked with implementing a database migrations strategy. 
+The goal was to  minimize the impact on our users and to ensure that during 
+the database migration database would not be corrupted with writes and reads 
+in the process. This blog post will describe the strategy we implemented and 
+how we applied it.
 
 Database migrations can be a tricky task for any organization, especially when 
 it comes to maintaining the availability of the system during the migration process. 

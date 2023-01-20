@@ -4,27 +4,16 @@ from src.infrastructure.databases import sqlalchemy_db as db
 
 class ServiceContextService:
 
-    def activate_maintenance_mode(self):
-        status = ServiceContext.query.first()
+    def update(self, data):
+        service_context = ServiceContext.query.first()
 
-        if status is None:
-            status = ServiceContext()
+        if service_context is None:
+            service_context = ServiceContext()
 
-        status.maintenance = True
-        status.save(db)
-        return status
+        service_context.update(db, data)
+        return service_context
 
-    def deactivate_maintenance_mode(self):
-        status = ServiceContext.query.first()
-
-        if status is None:
-            status = ServiceContext()
-
-        status.maintenance = False
-        status.save(db)
-        return status
-
-    def get_status(self):
+    def get_service_context(self):
         status = ServiceContext.query.first()
 
         if status is None:

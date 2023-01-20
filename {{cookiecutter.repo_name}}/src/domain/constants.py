@@ -6,3 +6,4 @@ ITEMIZE = 'itemize'
 ITEMIZED = 'itemized'
 PAGE = 'page'
 PER_PAGE = 'per_page'
+SERVICE_PREFIX = "SERVICE_PREFIX"

@@ -3,10 +3,10 @@ Database migrations can be a tricky task for any organization, especially when
 it comes to maintaining the availability of the system during the migration process. 
 One way to mitigate this risk is to implement a maintenance window strategy.
 
-A maintenance window is a specific time period during which a system or 
-application is taken offline for maintenance or updates. This approach allows 
-IT teams to perform necessary updates or migrations without affecting the 
-availability of the system for end users or end up with a corrupt database.
+In a maintenance window, the application is taken offline for maintenance or updates. 
+This approach enables IT teams to perform necessary updates or migrations 
+without compromising the system's availability for end users or risking a 
+corrupt database.
 
 As can be seen below in the diagram, the maintenance window strategy is
 implemented by taking the system offline during the maintenance window and
@@ -17,13 +17,14 @@ http status code.
 
 <img src="./images/maintenance_window_sequence.jpg" alt="drawing" width="800"/>
 
-The criteria for considering implementing a maintenance window strategy for database
+The criteria for implementing a maintenance window strategy for database
 migrations are:
 
 * Your database does not have migration tools that can be used to perform migrations
   without taking the database offline.
 * Your database is not hosted on a cloud provider that provides a managed database
-  service that can be used to perform migrations without taking the database offline.
+  service that can be used to perform migrations without taking the database offline. 
+* You're using a single database for your application and not a set of distributed database.
 
 ## Real world example
 For a real world example, we will look at a maintenance window strategy implementation for
@@ -66,27 +67,16 @@ from src.infrastructure.databases import sqlalchemy_db as db
 
 class ServiceContextService:
 
-    def activate_maintenance_mode(self):
-        status = ServiceContext.query.first()
+    def update(self, data):
+        service_context = ServiceContext.query.first()
 
-        if status is None:
-            status = ServiceContext()
+        if service_context is None:
+            service_context = ServiceContext()
 
-        status.maintenance = True
-        status.save(db)
-        return status
+        service_context.update(db, data)
+        return service_context
 
-    def deactivate_maintenance_mode(self):
-        status = ServiceContext.query.first()
-
-        if status is None:
-            status = ServiceContext()
-
-        status.maintenance = False
-        status.save(db)
-        return status
-
-    def get_status(self):
+    def get_service_context(self):
         status = ServiceContext.query.first()
 
         if status is None:
@@ -96,48 +86,29 @@ class ServiceContextService:
         return status
 ```
 
-### Maintenance mode activation
-To activate the maintenance mode, we can use a route as shown below:
+### Maintenance mode activation and deactivation
+To activate of deactivate the maintenance mode, we can use a route as shown below:
 ```python
-@blueprint.route('/maintenance/activate', methods=['GET'])
+@blueprint.route('/service-context', methods=['PATCH'])
+@post_data_required
 @inject
-def activate_maintenance_mode(
+def update_service_context(
+    json_data,
     service_context_service=Provide[
         DependencyContainer.service_context_service
     ]
 ):
-    service_context_service.activate_maintenance_mode()
-    return jsonify({"message": "maintenance mode activated"}), 200
+    service_context = service_context_service.update(json_data)
+    return create_response(service_context, ServiceContextSchema)
 ```
-When creating a public route, make sure that you have a way to authenticate the user 
-that makes the request in order to determine that the uses has the necessary permissions.
+When creating this public route, make sure that you have a way to authenticate the user 
+that makes the request in order to determine that the user has the necessary permissions.
 
 You can also create a management command with [Flask script]("https://flask-script.readthedocs.io/en/latest/") to 
 activate the maintenance mode from within the application: 
 
-```python
-@manager.command
-def activate_maintenance_mode():
-    service_context_service = app.container.service_context_service()
-    service_context_service.activate_maintenance_mode()
-    logger.info("Maintenance mode activated")
-```
-
-### Maintenance mode deactivation
-To deactivate the maintenance mode, we can use a route as shown below:
-```python
-@blueprint.route('/maintenance/deactivate', methods=['GET'])
-@inject
-def deactivate_maintenance_mode(
-    service_context_service=Provide[
-        DependencyContainer.service_context_service
-    ]
-):
-    service_context_service.deactivate_maintenance_mode()
-    return jsonify({"message": "maintenance mode deactivated"}), 200
-```
 Just as the activation mode, make sure that you have a way to authenticate the user
-that makes the request in order to determine that the uses has the necessary permissions.
+that makes the request in order to determine that the user has the necessary permissions.
 
 You can also create a management command with [Flask script]("https://flask-script.readthedocs.io/en/latest/") to
 ```python

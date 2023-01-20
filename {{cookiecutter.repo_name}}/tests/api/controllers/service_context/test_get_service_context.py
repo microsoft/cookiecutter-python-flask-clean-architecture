@@ -10,7 +10,7 @@ class Test(AppTestBase):
         self.setup_database()
 
     def test_retrieve_status(self):
-        response = self.client.get('/v1/status')
+        response = self.client.get('/v1/service-context')
         self.assertEqual(200, response.status_code)
         data = json.loads(response.data)
         self.assertEqual(False, data['maintenance'])

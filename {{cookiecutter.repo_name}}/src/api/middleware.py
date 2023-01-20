@@ -2,7 +2,7 @@ from functools import wraps
 
 from flask import request
 
-from src.domain import NoDataProvidedApiException
+from src.domain import NoDataProvidedApiException, SERVICE_PREFIX
 
 
 def setup_prefix_middleware(app, prefix):
@@ -14,6 +14,7 @@ def setup_prefix_middleware(app, prefix):
 
 
 class PrefixMiddleware(object):
+    ROUTE_NOT_FOUND_MESSAGE = "This url does not belong to the app."
 
     def __init__(self, app, prefix=''):
         self.app = app
@@ -28,7 +29,7 @@ class PrefixMiddleware(object):
             return self.wsgi_app(environ, start_response)
         else:
             start_response('404', [('Content-Type', 'text/plain')])
-            return ["This url does not belong to the app.".encode()]
+            return [self.ROUTE_NOT_FOUND_MESSAGE.encode()]
 
 
 def post_data_required(f):

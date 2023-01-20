@@ -102,3 +102,36 @@ python -m unittest discover -s tests
 ```
 
 [python unittest]: https://docs.python.org/3/library/unittest.html
+
+## Service prefix
+The application can use a service prefix for the endpoints.
+The service prefix is defined in the config.py file. Given a service prefix 
+of 'example', endpoints will be prefixed with '/example/v1/service-context'.
+
+```python
+# config.py
+SERVICE_PREFIX = os.environ.get(SERVICE_PREFIX, '')
+
+# middleware
+class PrefixMiddleware(object):
+    ROUTE_NOT_FOUND_MESSAGE = "This url does not belong to the app."
+
+    def __init__(self, app, prefix=''):
+        self.app = app
+        self.wsgi_app = app.wsgi_app
+        self.prefix = prefix
+
+    def __call__(self, environ, start_response):
+
+        if environ['PATH_INFO'].startswith(self.prefix):
+            environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
+            environ['SCRIPT_NAME'] = self.prefix
+            return self.wsgi_app(environ, start_response)
+        else:
+            start_response('404', [('Content-Type', 'text/plain')])
+            return [self.ROUTE_NOT_FOUND_MESSAGE.encode()]
+```
+
+During testing the service prefix is not applied. This allows you
+to test the endpoints without having to add the service prefix to the
+endpoint.

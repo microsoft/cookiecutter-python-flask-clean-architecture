@@ -9,19 +9,11 @@ class Test(AppTestBase):
         self.service_context_service = self.app.container\
             .service_context_service()
 
-    def test_activate_maintenance(self):
-        self.service_context_service.activate_maintenance_mode()
-        service_context = self.service_context_service.get_status()
-        self.assertTrue(service_context.maintenance)
-
-    def test_deactivate_maintenance(self):
-        self.service_context_service.deactivate_maintenance_mode()
-        service_context = self.service_context_service.get_status()
+    def test_get_service_context(self):
+        service_context = self.service_context_service.get_service_context()
         self.assertFalse(service_context.maintenance)
 
-    def test_get_status(self):
-        service_context = self.service_context_service.get_status()
-        self.assertFalse(service_context.maintenance)
-        self.service_context_service.activate_maintenance_mode()
-        service_context = self.service_context_service.get_status()
+    def test_update(self):
+        service_context = self.service_context_service\
+            .update({"maintenance": True})
         self.assertTrue(service_context.maintenance)

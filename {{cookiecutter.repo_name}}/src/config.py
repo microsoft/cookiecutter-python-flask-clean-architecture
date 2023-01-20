@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from .domain import SQLALCHEMY_DATABASE_URI, LOG_LEVEL
+from .domain import SQLALCHEMY_DATABASE_URI, LOG_LEVEL, SERVICE_PREFIX
 from dotenv import load_dotenv
 
 PROJECT_ROOT = str(Path(__file__).parent.parent)
@@ -27,6 +27,7 @@ class Config(object):
     ]
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ.get(SQLALCHEMY_DATABASE_URI)
+    SERVICE_PREFIX = os.environ.get(SERVICE_PREFIX, '')
 
     def __setitem__(self, key, item):
         self.__dict__[key] = item

@@ -7,6 +7,7 @@ from src.dependency_container import setup_dependency_container
 from src.error_handler import setup_error_handler
 from src.infrastructure import setup_sqlalchemy
 from src.logging import setup_logging
+from src.domain import SERVICE_PREFIX
 
 
 def create_app(
@@ -21,7 +22,7 @@ def create_app(
     app.container.wire(packages=[api])
     app = setup_cors(app)
     app.url_map.strict_slashes = False
-    app = setup_prefix_middleware(app, prefix='')
+    app = setup_prefix_middleware(app, prefix=app.config[SERVICE_PREFIX])
     app = setup_blueprints(app)
     app = setup_sqlalchemy(app)
     app = setup_error_handler(app)
