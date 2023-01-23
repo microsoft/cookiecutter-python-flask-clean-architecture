@@ -107,17 +107,23 @@ that makes the request in order to determine that the user has the necessary per
 You can also create a management command with [Flask script]("https://flask-script.readthedocs.io/en/latest/") to 
 activate the maintenance mode from within the application: 
 
-Just as the activation mode, make sure that you have a way to authenticate the user
-that makes the request in order to determine that the user has the necessary permissions.
-
-You can also create a management command with [Flask script]("https://flask-script.readthedocs.io/en/latest/") to
 ```python
 @manager.command
 def deactivate_maintenance_mode():
     service_context_service = app.container.service_context_service()
     service_context_service.deactivate_maintenance_mode()
     logger.info("Maintenance mode deactivated")
+
+
+@manager.command
+def deactivate_maintenance_mode():
+    service_context_service = app.container.service_context_service()
+    service_context_service.update({"maintenance": False})
+    logger.info("Maintenance mode deactivated")
 ```
+
+This allows you to activate or deactivate the maintenance mode from the command line if 
+you have access to the server where the application is running.
 
 ### Maintenance mode check
 We're using the before_request decorator to run the maintenance mode check before
@@ -147,6 +153,7 @@ One way is to do the migration manually by running the migration commands from
 within the application. This is the simplest way to apply migrations and gives 
 you the most control over the migration process.
 
+### Manual migrations
 An example of applying the migration manually is shown below in a kubernetes cluster:
 
 1. Login into a pod that has access to a database and has the maintenance window strategy implemented
@@ -168,6 +175,104 @@ An example of applying the migration manually is shown below in a kubernetes clu
     ```bash
     python manage.py deactivate_maintenance_mode
     ```
+
+### Pipeline based migration
+This is a more advanced way to apply migrations during a maintenance window.
+The idea is to use a pipeline to apply the migration. The pipeline below is an
+example of an azure app service deployment where a maintenance window is used to apply
+the migration.
+
+The pipeline is defined as follows:
+```bash
+trigger:
+  paths:
+    include:
+    - <service_path_from_rooth>/migrations/*
+
+variables:
+  production_web_app_service_url: "https://<production_service_url>"
+  staging_web_app_service_url: "https://<staging_web_app_service_url>"
+  projectRoot: $CI_PROJECT_DIR
+  vmImageName: ubuntu-latest
+  pythonVersion: 3.8
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
+stages:
+- stage: "deploy_stable"
+  condition: and(always(), eq(variables['isMain'], True))
+  jobs:
+  - job: "build_web_app"
+    displayName: "Build web app"
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+    - script: |
+        python -m venv venv
+        source  venv/bin/activate
+        python -m pip install --upgrade pip
+        pip install setup
+        pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt
+      workingDirectory: $(projectRoot)
+      displayName: "Install requirements"
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/Application$(Build.BuildId).zip'
+        replaceExistingArchive: true
+    - publish: $(Build.ArtifactStagingDirectory)/Application$(Build.BuildId).zip
+      displayName: 'Upload package'
+      artifact: drop
+    - script: |
+        curl -X PATCH -H "Content-Type: application/json" -d '{"maintenance": true}' $(production_web_app_service_url)/service-context
+      name: activate_maintenance_mode_production
+      displayName: Activate maintenance mode on production
+    - task: AzureWebApp@1
+      displayName: "Deploy web app to staging"
+      inputs:
+        azureSubscription: '<Azure service connection>'
+        appType: webAppLinux
+        appName: '<name of web app>'
+        deployToSlotOrASE: true
+        resourceGroupName: '<name of resource group>'
+        slotName: staging
+    - script: |
+        curl -X PATCH -H "Content-Type: application/json" -d '{"maintenance": true}' $(staging_web_app_service_url)/service-context
+      name: activate_maintenance_mode_staging
+      displayName: Activate maintenance mode on staging
+    - task: AzureKeyVault@2
+      displayName: Load key vault db connection string
+      inputs:
+        connectedServiceName: azure-keyvault-connection
+        keyVaultName: $(keyVaultName)
+        secretsFilter: '*'
+    - script: |
+        > .env
+        echo SQLALCHEMY_DATABASE_URI="$(SQLALCHEMEMY_DATABASE_URI)" >> .env
+      name: setup_env_file
+      displayName: Setup env file
+    - script: |
+        python manage.py db upgrade
+      name: apply_migrations
+      displayName: Apply migrations
+    - task: AzureAppServiceManage@0
+      displayName: 'Swap staging and production slots'
+      inputs:
+        azureSubscription: '<Azure service connection>'
+        appType: webAppLinux
+        WebAppName: '<name of web app>'
+        ResourceGroupName: '<name of resource group>'
+        SourceSlot: staging
+        SwapWithProduction: true
+    - script: |
+        curl -X PATCH -H "Content-Type: application/json" -d '{"maintenance": false}' $(production_web_app_service_url)/service-context
+      name: deactivate_maintenance_mode_production
+      displayName: Deactivate maintenance mode on production
+```
 
 ## Closing remarks
 When planning a maintenance window for a database migration, it's important to 
