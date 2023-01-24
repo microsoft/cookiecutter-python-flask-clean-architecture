@@ -1,0 +1,2 @@
+Flask-Testing==0.8.1
+testcontainers==3.7.0

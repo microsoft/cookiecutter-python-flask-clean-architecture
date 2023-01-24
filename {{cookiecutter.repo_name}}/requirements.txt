@@ -1,0 +1,14 @@
+Flask==1.1.1
+Flask-Cors==3.0.8
+Flask-SQLAlchemy==2.5
+Flask-Migrate==2.6.0
+Flask-Script==2.0.6
+psycopg2==2.9.5
+itsdangerous==1.1.0
+Werkzeug~=1.0.1
+Jinja2<3.1
+alembic~=1.8.0
+gunicorn==20.1.0
+dependency-injector==4.40.0
+python-dotenv==0.21.0
+marshmallow==3.5.0
