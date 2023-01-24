@@ -184,8 +184,8 @@ An example of applying the migration manually is shown below in a kubernetes clu
 
 ### Pipeline based migration
 This is a more advanced way to apply migrations during a maintenance window.
-The pipeline below is an example of an azure app service deployment where 
-a maintenance window is used to apply the migration.
+The pipeline below is an azure devops pipeline and an example of an azure 
+app service deployment where a maintenance window is used to apply the migration.
 
 The pipeline is defined as follows:
 ```bash
