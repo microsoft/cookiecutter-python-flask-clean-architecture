@@ -26,8 +26,8 @@ migrations are:
   service that can be used to perform migrations without taking the database offline. 
 * You're using a single database for your application and not a set of distributed database.
 
-## Real world example
-For a real world example, we will look at a maintenance window strategy implementation for
+## Real-world example
+For a real-world example, we will look at a maintenance window strategy implementation for
 a FLASK application with a SQL based database. Given that the application uses SQLAlchemy and alembic for 
 database migrations we will have the following components:
 
@@ -51,7 +51,7 @@ class ServiceContext(db.Model, ModelExtension):
 ```
 
 We use a database model to store the current state of the service because it allows
-us to store the state of the service in a persistent manner. This means that if the
+us to store the state of the service persistently. This means that if the
 service is restarted, the state of the service will be restored. Also, if the service
 is running on multiple instances, the state of the service will be consistent across
 all instances. 
@@ -111,8 +111,8 @@ activate the maintenance mode from within the application:
 @manager.command
 def deactivate_maintenance_mode():
     service_context_service = app.container.service_context_service()
-    service_context_service.deactivate_maintenance_mode()
-    logger.info("Maintenance mode deactivated")
+    service_context_service.update({"maintenance": True})
+    logger.info("Maintenance mode activated")
 
 
 @manager.command
@@ -156,7 +156,7 @@ you the most control over the migration process.
 ### Manual migrations
 An example of applying the migration manually is shown below in a kubernetes cluster:
 
-1. Login into a pod that has access to a database and has the maintenance window strategy implemented
+1. Access a pod that has access to a database and has the maintenance window strategy implemented
     ```bash
     kubectl exec -it <pod_name> -- /bin/bash
     ```
@@ -178,9 +178,8 @@ An example of applying the migration manually is shown below in a kubernetes clu
 
 ### Pipeline based migration
 This is a more advanced way to apply migrations during a maintenance window.
-The idea is to use a pipeline to apply the migration. The pipeline below is an
-example of an azure app service deployment where a maintenance window is used to apply
-the migration.
+The pipeline below is an azure devops pipeline and an example of an azure 
+app service deployment where a maintenance window is used to apply the migration.
 
 The pipeline is defined as follows:
 ```bash
@@ -274,11 +273,16 @@ stages:
       displayName: Deactivate maintenance mode on production
 ```
 
+The pipeline is triggered when a migration is pushed to the main branch.
+The pipeline will then build the application, 
+set the production and staging app in maintenance mode, apply the migration and 
+swap the production and staging slots.
+
 ## Closing remarks
 When planning a maintenance window for a database migration, it's important to 
 consider the following:
 
-1) Identify the right time: Choose a time period that has the least impact on end users, such as during off-peak hours or weekends.
+1) Identify the right time: Choose a time that has the least impact on end users, such as during off-peak hours or weekends.
 
 2) Communicate with stakeholders: Notify all stakeholders, including customers and internal teams, of the planned maintenance window well in advance. This will give them ample time to plan and prepare for the interruption in service.
 
@@ -290,7 +294,7 @@ consider the following:
 
 6) By implementing a maintenance window strategy, organizations can minimize the impact of database migrations on end users and ensure the availability of the system during the migration process.
 
-It's also important to note that some migrations such as those of a very large databases or 
+It's also important to note that some migrations such as those of very large databases or 
 those that require a lot of data transformation may require more than one maintenance window. 
 In such scenarios it is important to plan and test the migration in chunks, allowing for a more 
 gradual and controlled migration process.
