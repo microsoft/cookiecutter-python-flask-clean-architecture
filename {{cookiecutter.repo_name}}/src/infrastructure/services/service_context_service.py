@@ -9,6 +9,7 @@ class ServiceContextService:
 
         if service_context is None:
             service_context = ServiceContext()
+            service_context.save(db)
 
         service_context.update(db, data)
         return service_context

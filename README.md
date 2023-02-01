@@ -38,32 +38,29 @@ This architecture can be seen in the following diagram:
 │   │   │   └── ...  # controllers for the api
 │   │   ├── schemas
 │   │   │   └── ...  # Marshmallow schemas
-│   │   ├── middleware.py
-│   │   ├── responses.py
-│   │   └── requests.py
+│   │   └── errors.rs
 │   ├── infrastructure
-│   │   ├── services
-│   │   │   └── ...  # Services that use third party libraries or services (e.g. email service)
 │   │   ├── databases
 │   │   │   └── ...  # Database adapaters and initialization
 │   │   ├── repositories
 │   │   │   └── ...  # Repositories for interacting with the databases
-│   │   └── models
-│   │   │   └── ...  # Database models
-│   ├── domain
-│   │   ├── constants.py
-│   │   ├── exceptions.py
 │   │   ├── models
-│   │   │   └── ...  # Business logic models
+│   │   │   └── ...  # Database models
+│   │   ├── errors.rs
+│   │   └── schemas.rs # Diesel ORM generated schemas
+│   ├── domain
+│   │   ├── repositories
+│   │   │   └── ...  # Repository traits/interfaces for interacting with the domain models
+│   │   ├── models
+│   │   │   └── ...  # Domain models
+│   │   ├──  services
+│   │   │   └── ...  # Service traits/interfaces for interacting with the domain (business logic)
+│   │   ├── constants.rs
+│   │   └── errors.rs
 │   ├── services
-│   │    └── ...  # Services for interacting with the domain (business logic)
-│   ├── app.py
-│   ├── config.py
-│   ├── cors.py
-│   ├── create_app.py
-│   ├── dependency_container.py
-│   ├── error_handler.py
-│   └── logging.py
+│   │    └── ...  # Concrete service implementation for the traits/interfaces defined in the domain layer
+│   ├── main.rs
+│   └── containers.rs
 ```
 The application is structured with the following components:
 
