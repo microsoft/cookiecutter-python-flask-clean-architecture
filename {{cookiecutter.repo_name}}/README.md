@@ -1,97 +1,91 @@
-# Cookie cutter template for a Python REST Api
-This is a cookie cutter template for a Python REST Api. 
-The application follows the Onion Architecture pattern. It uses SQLAlchemy 
-for interacting with the database and Alembic for handling database migrations. 
-Marshmallow is used for object serialization and deserialization. The 
-application also supports maintenance windows for performing database 
-migrations without disrupting the normal operation of the application.
+# Cookiecutter actix simple clean architecture
+This is a reusable Python Flask template. The project is based on Flask in combination with SQLAlchemy ORM.
 
-Also, the application is dockerized and uses test containers for running the 
-integration tests.
+Complete list of features the template provides:
+* [Onion architecture](#onion-architecture)
+* [Maintenance window support](#maintenance-window-support)
+* [SQLAlchemy ORM](#sqlalchemy-orm)
+* [Alembic Database migrations](#alembic-database-migrations)
+* [Local postgres database docker support](#local-postgres-database-docker-support)
+* [Test and test containers integration](#test-and-test-containers-integration)
+* [Service prefix](#service-prefix)
+* [Dependency injection](#dependency-injection)
+* [Service-repository design pattern](#service-repository-design-pattern)
 
 ## Getting started
 To start a new project, run the following command:
 ```bash
-cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
+cookiecutter -c v1 https://github.com/microsoft/cookiecutter-python-flask-clean-architecture
 ```
 This will prompt you for some information about your project. The information
 you provide will be used to populate the files in the new project directory.
 
-## Architecture 
-The application follows the Onion Architecture pattern.
-This architecture is a design pattern that organizes the codebase 
-of a software application into multiple layers, where the innermost layer 
-is the domain layer and the outermost layer is the application layer. 
-Each layer depends only on the layers inside of it and not on the layers outside of it, 
+## Onion Architecture 
+The application follows the Onion Architecture pattern. An article is written 
+about our experience integrating an onion architecture with actix web in combination with diesel ORM that can 
+be found [here](./docs/onion-architecture-article.md).
+
+This architecture is a design pattern that organizes the codebase of a software application into multiple layers, where the innermost layer 
+is the domain layer and the outermost layer is the application layer. Each layer depends only on the layers inside of it and not on the layers outside of it, 
 creating a separation of concerns, allowing for a more maintainable and scalable codebase.
 
-This architecture can be seen in the following diagram:
-    
+For this template we suggest using a service-repository design pattern. For example implementations you can have a look at 
+
+
+## Running the application locally
+To run the application locally, you need to have a Postgres database running.
+You can use the `run_postgres.sh` script in the `scripts` directory to run a Postgres container.
+```bash
+./scripts/run_postgres.sh
 ```
-.
-├── migrations
-├── scripts
-│   └── run_postgres.sh
-├── src
-│   ├── api
-│   │   ├── controllers
-│   │   │   └── ...  # controllers for the api
-│   │   ├── schemas
-│   │   │   └── ...  # Marshmallow schemas
-│   │   ├── middleware.py
-│   │   ├── responses.py
-│   │   └── requests.py
-│   ├── infrastructure
-│   │   ├── services
-│   │   │   └── ...  # Services that use third party libraries or services (e.g. email service)
-│   │   ├── databases
-│   │   │   └── ...  # Database adapaters and initialization
-│   │   ├── repositories
-│   │   │   └── ...  # Repositories for interacting with the databases
-│   │   └── models
-│   │   │   └── ...  # Database models
-│   ├── domain
-│   │   ├── constants.py
-│   │   ├── exceptions.py
-│   │   ├── models
-│   │   │   └── ...  # Business logic models
-│   ├── services
-│   │    └── ...  # Services for interacting with the domain (business logic)
-│   ├── app.py
-│   ├── config.py
-│   ├── cors.py
-│   ├── create_app.py
-│   ├── dependency_container.py
-│   ├── error_handler.py
-│   └── logging.py
+
+You can then run the application with flask:
+```bash
+Flask --app src/app run 
 ```
-The application is structured with the following components:
+or with gunicorn:
+```bash
+gunicorn wsgi:app -b  0.0.0.0:7000 --workers=1 --preload
+```
 
-* api (app) module: The outermost layer that contains the controllers and the endpoints definition, serialization and deserialization of the data, validation and error handling.
-* infrastructure: Layer that typically include database connections, external APIs calls, logging and configuration management.
-* services: Layer that contains the application's services, which encapsulate the core business logic and provide a higher-level abstraction for the application to interact with the domain entities.
-* domain: The innermost layer that contains the core business logic and entities of the application.
-* migrations: Alembic's migration scripts are stored here.
-* scripts: contains the application's configuration settings.
+## Test and test containers integration
+All tests are can be found under the `tests` folder. When using the template
+you can place all you tests in this folder.
 
-## Database migrations
-For performing database migrations during maintenance windows, 
-you can use the manage.py command-line tool to generate and apply new migrations.
+To run the tests, you can use the following command:
+```bash
+python -m unittest discover -s tests
+```
 
+## SQLAlchemy ORM
+The template uses SQLAlchemy ORM for its database connection and database models
+integration. Its is currently setup with postgres, however you can 
+change it to any other database that is supported by diesel. For other databases 
+have a look at the official Flask SQLAlchemy documentation that can be found [here](https://flask-sqlalchemy.palletsprojects.com/en/3.0.x/)
+
+## Alembic database migrations
 > Note: The application uses a postgres database. Make sure you have a postgres
 > database running before running the following commands. For local development,
 > you can use the run_postgres.sh script to run a postgres container locally.
 
+1) Make sure you have the diesel cli installed. You can install it with the following command:
+    ```bash
+    sh ./scripts/run_postgres.sh
+    ```
+2) Create a database migration
+    ```bash
+    flask db migrate -m <migration-message>
+    ```
+3) Apply the database migration:
+    ```bash
+    flask db upgrade
+    ```
+   
+## Local postgres database docker support 
+You can run a local postgres docker database by using the following script:
 ```bash
-# Generate a new migration
-python manage.py db migrate -m "migration message"
-
-# Apply the new migration
-python manage.py db upgrade
-
-# Downgrade the database to the previous migration
-python manage.py db downgrade
-```
+ sh ./scripts/run_postgres.sh
+ ```
 
 ## Tests
 The application uses [python unittest] for unit testing for integration testing.
@@ -135,3 +129,46 @@ class PrefixMiddleware(object):
 During testing the service prefix is not applied. This allows you
 to test the endpoints without having to add the service prefix to the
 endpoint.
+
+## Maintenance window support
+TODO
+
+## Dependency injection
+TODO
+
+## Test container integration
+
+## Service repository design pattern
+
+### SQLAlchemy Repositories
+The onion architecture is best being used with a repository-service pattern. An example 
+repository can be seen below:
+
+```python
+from infrastructure.repositories import Repository
+from infrastructure.models import MyModel
+
+class MyExampleRepository(Repository):
+    base_class = MyModel
+    DEFAULT_NOT_FOUND_MESSAGE = "MyModel was not found"
+
+    def _apply_query_params(self, query, query_params):
+        name_query_param = self.get_query_param("name", query_params)
+        
+        if name_query_param:
+           query = query.filter_by(name=name_query_param)
+            
+        return query
+```
+
+### Services
+The onion architecture is best being used with a repository-service pattern. An example 
+service can be seen below:
+```python
+from services.repository_service import RepositoryService
+
+class MyExampleService(RepositoryService):
+    # The RepositoryService gives you access to crud repository operations by the inheritance 
+    # RepositoryService.
+    pass
+```

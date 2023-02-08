@@ -31,7 +31,7 @@ Each layer depends only on the layers inside of it and not on the layers outside
 creating a separation of concerns, allowing for a more maintainable and scalable codebase.
 
 This layered architecture can be seen translated to an application in the following diagram:
-    
+
 ```
 .
 ├── migrations
