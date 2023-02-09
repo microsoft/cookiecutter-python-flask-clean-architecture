@@ -1,4 +1,4 @@
-# Cookiecutter actix simple clean architecture
+# Cookiecutter flask clean architecture
 This is a reusable Python Flask template. The project is based on Flask in combination with SQLAlchemy ORM.
 
 Complete list of features the template provides:
