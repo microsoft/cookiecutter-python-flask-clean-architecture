@@ -50,7 +50,7 @@ For example implementations you can have a look at [Service-repository design pa
 
 ## Maintenance window support
 This template provides you with a maintenance window mode. To learn more about 
-maintenance windows in your service you can read this article [here]()
+maintenance windows in your service you can read this article [here](https://devblogs.microsoft.com/cse/2023/02/08/maintenance_window_db_migrations/)
 
 During maintenance mode, clients will receive an http 503 status code.
 
