@@ -7,7 +7,7 @@ Complete list of features the template provides:
 * [SQLAlchemy ORM](#sqlalchemy-orm)
 * [Alembic Database migrations](#alembic-database-migrations)
 * [Local postgres database docker support](#local-postgres-database-docker-support)
-* [Test and test containers integration](#test-and-test-containers-integration)
+* [Tests and test containers integration](#tests-and-test-containers-integration)
 * [Service prefix](#service-prefix)
 * [Dependency injection](#dependency-injection)
 * [Service-repository design pattern](#service-repository-design-pattern)
@@ -20,48 +20,81 @@ cookiecutter -c v1 https://github.com/microsoft/cookiecutter-python-flask-clean-
 This will prompt you for some information about your project. The information
 you provide will be used to populate the files in the new project directory.
 
-## Onion Architecture 
-The application follows the Onion Architecture pattern. An article is written 
-about our experience integrating an onion architecture with actix web in combination with diesel ORM that can 
-be found [here](./docs/onion-architecture-article.md).
-
-This architecture is a design pattern that organizes the codebase of a software application into multiple layers, where the innermost layer 
-is the domain layer and the outermost layer is the application layer. Each layer depends only on the layers inside of it and not on the layers outside of it, 
-creating a separation of concerns, allowing for a more maintainable and scalable codebase.
-
-For this template we suggest using a service-repository design pattern. For example implementations you can have a look at 
-
-
-## Running the application locally
+### Running the application locally
 To run the application locally, you need to have a Postgres database running.
 You can use the `run_postgres.sh` script in the `scripts` directory to run a Postgres container.
 ```bash
 ./scripts/run_postgres.sh
 ```
-
 You can then run the application with flask:
 ```bash
-Flask --app src/app run 
+flask --app src/app run 
 ```
 or with gunicorn:
 ```bash
 gunicorn wsgi:app -b  0.0.0.0:7000 --workers=1 --preload
 ```
 
-## Test and test containers integration
-All tests are can be found under the `tests` folder. When using the template
-you can place all you tests in this folder.
+## Onion Architecture 
+The application follows the Onion Architecture pattern. An article is written 
+about our experience integrating an onion architecture with flask in combination with 
+SQL Alchemy ORM that can be found [here](./docs/onion-architecture-article.md).
 
-To run the tests, you can use the following command:
+This architecture is a design pattern that organizes the codebase of a software application into multiple layers, where the innermost layer 
+is the domain layer and the outermost layer is the application layer. Each layer depends only on the layers inside of it and not on the layers outside of it, 
+creating a separation of concerns, allowing for a more maintainable and scalable codebase.
+
+For this template we suggest using a service-repository design pattern. This template also provides 
+a set of abc meta classes that you can use to create your repositories and services.
+For example implementations you can have a look at [Service-repository design pattern](#service-repository-design-pattern).
+
+## Maintenance window support
+This template provides you with a maintenance window mode. To learn more about 
+maintenance windows in your service you can read this article [here]()
+
+During maintenance mode, clients will receive an http 503 status code.
+
+### Activating maintenance mode
+You can activate maintenance mode in the following ways:
 ```bash
-python -m unittest discover -s tests
+curl -X PATCH http://localhost:7000/<service-prefix>/v1/service-context -d '{"maintenance": true}' -H 'Content-Type: application/json'
+```
+or via the command line:
+```bash
+flask activate_maintenance_mode
+```
+
+### Deactivating maintenance mode
+You can deactivate maintenance mode in the following ways:
+```bash
+curl -X PATCH http://localhost:7000/<service-prefix>/v1/service-context -d '{"maintenance": false}' -H 'Content-Type: application/json'
+```
+or via the command line:
+```bash
+flask deactivate_maintenance_mode
 ```
 
 ## SQLAlchemy ORM
 The template uses SQLAlchemy ORM for its database connection and database models
 integration. Its is currently setup with postgres, however you can 
-change it to any other database that is supported by diesel. For other databases 
-have a look at the official Flask SQLAlchemy documentation that can be found [here](https://flask-sqlalchemy.palletsprojects.com/en/3.0.x/)
+change it to any other database that is supported by SQLAlchemy. For other databases 
+have a look at the official Flask SQLAlchemy documentation 
+that can be found [here](https://flask-sqlalchemy.palletsprojects.com/en/3.0.x/)
+
+This template provides you with a model base class that you can use to create your models.
+
+```python
+from src.infrastructure.models.model_extension import ModelExtension
+
+class User(ModelExtension):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    attribute_a = Column(String(50), nullable=False)
+    attribute_b = Column(String(50), nullable=False)
+
+    def __repr__(self):
+        return self.repr(id=self.id, attribute_a=self.attribute_a, attribute_b=self.attribute_b)
+```
 
 ## Alembic database migrations
 > Note: The application uses a postgres database. Make sure you have a postgres
@@ -87,15 +120,37 @@ You can run a local postgres docker database by using the following script:
  sh ./scripts/run_postgres.sh
  ```
 
-## Tests
-The application uses [python unittest] for unit testing for integration testing.
+This will run a postgres docker container on port 5432. Also it will create a
+.env file in the root directory of the project. This file contains the database
+connection string. The service will read this connection string from the .env file 
+and use it to connect to the database.
 
-To run the unit tests, run the following command from the root directory:
+## Tests and test containers integration
+All tests are can be found under the `tests` folder. When using the template
+you can place all you tests in this folder.
+
+The service uses [python unittest](https://docs.python.org/3/library/unittest.html) in combination
+with [flask testing]
+
+To run the tests, you can use the following command:
 ```bash
 python -m unittest discover -s tests
 ```
 
-[python unittest]: https://docs.python.org/3/library/unittest.html
+You can use the test containers library to run your tests against a postgres database.
+You do this by ```setup_database()``` in your test class. This will create a postgres container
+and run your tests against it. After the tests are done, the container will be destroyed.
+
+If you want to run your tests against a different database, you can change the 
+setyp_database method in the test class to use a different database container.
+
+```python
+class Test(AppTestBase):
+
+    def setUp(self) -> None:
+        super(Test, self).setUp()
+        self.setup_database()
+```
 
 ## Service prefix
 The application can use a service prefix for the endpoints.
@@ -130,19 +185,25 @@ During testing the service prefix is not applied. This allows you
 to test the endpoints without having to add the service prefix to the
 endpoint.
 
-## Maintenance window support
-TODO
+If the service prefix is not set, the service will not use a service prefix.
+
 
 ## Dependency injection
-TODO
+This template uses the [dependency_injector](https://pypi.org/project/dependency-injector/) library
+for dependency injection. The template provides you with a container class that you can use to
+register your dependencies. The container class is located in the `src/dependency_container.py` file.
 
-## Test container integration
+You can add your dependencies to the container and use them 
+in your routers, services and repositories.
 
 ## Service repository design pattern
+This template provides you with a repository-service pattern. There are two base classes
+that you can use to create your repositories and services. These base classes are located
+in the `src/services/repository_service.py` and `src/infrastructure/repositories/repository.py`.
 
-### SQLAlchemy Repositories
-The onion architecture is best being used with a repository-service pattern. An example 
-repository can be seen below:
+### Repository example
+A repository example can be seen below, this repository is used to query the MyModel model.
+For custom query params support override the `_apply_query_params` method.
 
 ```python
 from infrastructure.repositories import Repository
@@ -161,9 +222,9 @@ class MyExampleRepository(Repository):
         return query
 ```
 
-### Services
-The onion architecture is best being used with a repository-service pattern. An example 
-service can be seen below:
+### Service example
+A Service example can be seen below, this service expect a repository to be injected in its contuctor.
+
 ```python
 from services.repository_service import RepositoryService
 
@@ -171,4 +232,7 @@ class MyExampleService(RepositoryService):
     # The RepositoryService gives you access to crud repository operations by the inheritance 
     # RepositoryService.
     pass
+
+# Can be instantiate by injecting the repository
+my_example_service = MyExampleService(my_example_repository)
 ```
