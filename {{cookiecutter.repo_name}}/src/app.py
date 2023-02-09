@@ -14,7 +14,7 @@ app = create_app(Config, dependency_container_packages=[api])
 @app.before_request
 def check_for_maintenance():
     service_context_service = app.container.service_context_service()
-    status = service_context_service.get_status()
+    status = service_context_service.get_service_context()
 
     if not ("maintenance" in request.path or "status" in request.path):
         if status.maintenance:

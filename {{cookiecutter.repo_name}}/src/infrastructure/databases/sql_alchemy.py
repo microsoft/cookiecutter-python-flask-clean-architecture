@@ -9,13 +9,10 @@ class SQLAlchemyAdapter:
 
     def __init__(self, app):
 
-        if SQLALCHEMY_DATABASE_URI not in app.config \
-                or app.config[SQLALCHEMY_DATABASE_URI] is None:
-
-            if not app.config["TESTING"]:
-                raise OperationalException("SQLALCHEMY_DATABASE_URI not set")
-
-        sqlalchemy_db.init_app(app)
+        if app.config[SQLALCHEMY_DATABASE_URI] is not None:
+            sqlalchemy_db.init_app(app)
+        elif not app.config["TESTING"]:
+            raise OperationalException("SQLALCHEMY_DATABASE_URI not set")
 
 
 def setup_sqlalchemy(app, throw_exception_if_not_set=True):

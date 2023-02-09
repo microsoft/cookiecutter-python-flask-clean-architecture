@@ -8,6 +8,7 @@ from src.error_handler import setup_error_handler
 from src.infrastructure import setup_sqlalchemy
 from src.logging import setup_logging
 from src.domain import SERVICE_PREFIX
+from src.management import setup_management
 
 
 def create_app(
@@ -26,6 +27,7 @@ def create_app(
     app = setup_blueprints(app)
     app = setup_sqlalchemy(app)
     app = setup_error_handler(app)
+    app = setup_management(app)
 
     # Dependency injection container initialization should be done last
     app = setup_dependency_container(
