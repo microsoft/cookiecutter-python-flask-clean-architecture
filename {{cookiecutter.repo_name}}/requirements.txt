@@ -7,7 +7,7 @@ itsdangerous==1.1.0
 Werkzeug~=1.0.1
 Jinja2<3.1
 alembic~=1.8.1
-gunicorn==20.1.0
+gunicorn==22.0.0
 dependency-injector==4.40.0
 python-dotenv==0.21.0
 marshmallow==3.5.0
