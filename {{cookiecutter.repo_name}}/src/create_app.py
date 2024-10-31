@@ -17,8 +17,8 @@ def create_app(
     dependency_container_modules=None,
 ):
     app = Flask(__name__.split('.')[0])
-    app = setup_logging(app)
     app.config.from_object(config)
+    app = setup_logging(app)
     app = setup_dependency_container(app)
     app.container.wire(packages=[api])
     app = setup_cors(app)
