@@ -15,6 +15,7 @@ def create_app(
     config,
     dependency_container_packages=None,
     dependency_container_modules=None,
+    setup_sqlalchemy=True
 ):
     app = Flask(__name__.split('.')[0])
     app = setup_logging(app)
@@ -25,7 +26,10 @@ def create_app(
     app.url_map.strict_slashes = False
     app = setup_prefix_middleware(app, prefix=app.config[SERVICE_PREFIX])
     app = setup_blueprints(app)
-    app = setup_sqlalchemy(app)
+
+    if setup_sqlalchemy:
+        app = setup_sqlalchemy(app)
+
     app = setup_error_handler(app)
     app = setup_management(app)
 

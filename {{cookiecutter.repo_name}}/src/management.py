@@ -18,16 +18,4 @@ def setup_management(app):
     def print_config():
         print(app.config)
 
-    @app.cli.command("activate_maintenance_mode")
-    def activate_maintenance_mode():
-        service_context_service = app.container.service_context_service()
-        service_context_service.update({"maintenance": True})
-        logger.info("Maintenance mode activated")
-
-    @app.cli.command("deactivate_maintenance_mode")
-    def deactivate_maintenance_mode():
-        service_context_service = app.container.service_context_service()
-        service_context_service.update({"maintenance": False})
-        logger.info("Maintenance mode deactivated")
-
     return app
