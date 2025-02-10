@@ -3,6 +3,7 @@ from abc import ABC
 from typing import Callable
 
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.datastructures import MultiDict
 
 from src.domain import ApiException, ITEMIZE, ITEMIZED, PAGE, PER_PAGE, \
     DEFAULT_PAGE_VALUE, DEFAULT_PER_PAGE_VALUE
@@ -31,7 +32,7 @@ class Repository(ABC):
     def update(self, object_id, data):
         try:
             update_object = self.get(object_id)
-            update_object.update(db, data)
+            update_object.update(db=db, data=data)
             return update_object
         except SQLAlchemyError as e:
             logger.error(e)
@@ -156,15 +157,12 @@ class Repository(ABC):
         :param params: a flask query parameters data structure
         :return: a dict of normalized query parameters
         """
-
-        if not isinstance(params, dict):
+        if isinstance(params, MultiDict):
             params = params.to_dict(flat=False)
 
-        return {
-            k: self.normalize_query_param(v) for k, v in params.items()
-        }
+        return {k: self.normalize_query_param(v) for k, v in params.items()}
 
-    def get_query_param(self, key, params, default=None, many=False):
+    def get_query_param(self, key: str, params, default=None, many=False):
         boolean_array = ["true", "false"]
 
         if params is None:
