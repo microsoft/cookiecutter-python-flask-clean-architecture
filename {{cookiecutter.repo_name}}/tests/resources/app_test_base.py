@@ -24,7 +24,11 @@ class AppTestBase(TestCase):
             db.session.close()
             self.postgres_container.stop()
 
-    def initialize_database(self):
+    def cleanup_database(self):
+        """
+        Clean up the database by dropping all tables. This is useful
+        for resetting the database state between tests.
+        """
 
         with self.app.app_context():
             db.drop_all()
@@ -42,10 +46,9 @@ class AppTestBase(TestCase):
         self.app = create_app(
             config,
             dependency_container_packages=[api],
-            setup_sqlalchemy=False
+            initialize_database=True
         )
-        setup_sqlalchemy(self.app)
-        self.initialize_database()
+        self.cleanup_database()
         return self.app
 
     def tearDown(self) -> None:
