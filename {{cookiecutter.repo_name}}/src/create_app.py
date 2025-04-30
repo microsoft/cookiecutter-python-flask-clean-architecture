@@ -34,6 +34,8 @@ def create_app(
     """
     app = Flask(__name__.split('.')[0])
     app.config.from_object(config)
+
+    # Setup logging should be run after the config is loaded
     app = setup_logging(app)
     app = setup_dependency_container(app)
     app.container.wire(packages=[api])
