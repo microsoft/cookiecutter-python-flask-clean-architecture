@@ -24,7 +24,7 @@ def create_app(
         config (object): Configuration object for the Flask app.
         dependency_container_modules (list): List of modules to
             wire with the dependency container. Defaults to None.
-        setup_sqlalchemy (bool): Flag to set up SQLAlchemy.
+        initialize_database (bool): Flag to set up SQLAlchemy.
             Defaults to True.
 
     Returns:
