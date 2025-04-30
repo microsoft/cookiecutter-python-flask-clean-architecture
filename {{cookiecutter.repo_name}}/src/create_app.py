@@ -25,7 +25,9 @@ def create_app(
         dependency_container_modules (list): List of modules to
             wire with the dependency container. Defaults to None.
         initialize_database (bool): Flag to set up SQLAlchemy.
-            Defaults to True.
+            Defaults to True. This only implements the sqlalchemy
+            setup, not the database migration. This does not do an
+            overall database initialization or migration.
 
     Returns:
         Flask: Configured Flask application instance.
