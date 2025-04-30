@@ -5,7 +5,7 @@ from src.api import setup_prefix_middleware, setup_blueprints
 from src.cors import setup_cors
 from src.dependency_container import setup_dependency_container
 from src.error_handler import setup_error_handler
-from src.infrastructure import setup_sqlalchemy
+from src.infrastructure import setup_sqlalchemy as setup_sqlalchemy_function
 from src.logging import setup_logging
 from src.domain import SERVICE_PREFIX
 from src.management import setup_management
@@ -17,9 +17,24 @@ def create_app(
     dependency_container_modules=None,
     setup_sqlalchemy=True
 ):
+    """
+    Factory function to create a Flask application instance.
+
+    Args:
+        config (object): Configuration object for the Flask app.
+        dependency_container_packages (list): List of packages to wire
+            with the dependency container.
+        dependency_container_modules (list): List of modules to
+            wire with the dependency container.
+        setup_sqlalchemy (bool): Flag to set up SQLAlchemy.
+            Defaults to True.
+
+    Returns:
+        Flask: Configured Flask application instance.
+    """
     app = Flask(__name__.split('.')[0])
-    app = setup_logging(app)
     app.config.from_object(config)
+    app = setup_logging(app)
     app = setup_dependency_container(app)
     app.container.wire(packages=[api])
     app = setup_cors(app)
@@ -28,7 +43,7 @@ def create_app(
     app = setup_blueprints(app)
 
     if setup_sqlalchemy:
-        app = setup_sqlalchemy(app)
+        app = setup_sqlalchemy_function(app)
 
     app = setup_error_handler(app)
     app = setup_management(app)
