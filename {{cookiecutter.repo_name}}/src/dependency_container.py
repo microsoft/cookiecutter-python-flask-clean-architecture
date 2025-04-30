@@ -1,6 +1,7 @@
 from dependency_injector import containers, providers
 
-from src.infrastructure import ServiceContextService
+from src.infrastructure import SQLTodoRepository
+from src.services import TodoService
 
 
 def setup_dependency_container(app, modules=None, packages=None):
@@ -13,4 +14,7 @@ def setup_dependency_container(app, modules=None, packages=None):
 class DependencyContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
     wiring_config = containers.WiringConfiguration()
-    service_context_service = providers.Factory(ServiceContextService)
+    todo_repository = providers.Factory(SQLTodoRepository)
+    todo_service = providers.Factory(
+        TodoService, repository=todo_repository,
+    )

@@ -3,6 +3,7 @@ from .constants import SQLALCHEMY_DATABASE_URI, LOG_LEVEL, \
     PER_PAGE, SERVICE_PREFIX
 from .exceptions import OperationalException, ApiException, \
     NoDataProvidedApiException, ClientException
+from .models import Todo
 
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     'PAGE',
     'PER_PAGE',
     'SERVICE_PREFIX',
+    'Todo'
 ]

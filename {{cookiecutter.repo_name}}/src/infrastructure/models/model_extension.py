@@ -1,7 +1,7 @@
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 
-class ModelExtension:
+class SQLModelExtension:
 
     def update(self, db, data, commit=True, **kwargs):
 

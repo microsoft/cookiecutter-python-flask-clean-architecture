@@ -1,3 +1,3 @@
-from .service_context import ServiceContextSchema
+from .todo import TodoSchema
 
-__all__ = ['ServiceContextSchema']
+__all__ = ['TodoSchema']

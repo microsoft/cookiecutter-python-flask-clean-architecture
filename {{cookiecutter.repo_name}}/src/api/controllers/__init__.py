@@ -1,8 +1,8 @@
-from .service_context import blueprint as service_context_blueprint
+from .todo import blueprint as todo_blueprint
 
 
 def setup_blueprints(app) -> None:
-    app.register_blueprint(service_context_blueprint, url_prefix="/v1")
+    app.register_blueprint(todo_blueprint, url_prefix="/v1")
     return app
 
 
