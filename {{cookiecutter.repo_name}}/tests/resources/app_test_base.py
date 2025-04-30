@@ -42,9 +42,8 @@ class AppTestBase(TestCase):
         self.app = create_app(
             config,
             dependency_container_packages=[api],
-            initialize_database=False
+            initialize_database=True
         )
-        setup_sqlalchemy(self.app)
         self.initialize_database()
         return self.app
 
